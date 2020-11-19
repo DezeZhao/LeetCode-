@@ -1,3 +1,7 @@
+# <center>目录</center>
+
+[TOC]
+
 ## 二叉树
 
 ### [重建二叉树](https://leetcode-cn.com/problems/zhong-jian-er-cha-shu-lcof)
@@ -323,6 +327,41 @@ public:
         return root;//在左右子树上都找到了 说明当前根节点是其最近公共祖先
         //找到之后传递到其根节点 一直向上传递直到根节点 退出递归
     }
+};
+~~~
+
+### [二叉树的镜像](https://leetcode-cn.com/problems/er-cha-shu-de-jing-xiang-lcof/)
+
+#### 我的题解
+
+~~~cpp
+/**
+ * Definition for a binary tree node.
+ * struct TreeNode {
+ *     int val;
+ *     TreeNode *left;
+ *     TreeNode *right;
+ *     TreeNode(int x) : val(x), left(NULL), right(NULL) {}
+ * };
+ */
+class Solution {
+public:
+    /*
+    将左右孩子节点进行
+    交换，然后在利用先序递归，那么就将所有结点的左右孩子都进行了交换。
+    */
+    TreeNode* mirrorTree(TreeNode* root) {
+        exchange(root);
+        return root;
+    }
+
+    void exchange(TreeNode *root){
+        if(!root) return;
+        swap(root->left, root->right);
+        exchange(root->left);
+        exchange(root->right);
+    }
+
 };
 ~~~
 
@@ -922,7 +961,7 @@ public:
 
 ## 栈和队列
 
-### [柱状图中最大的矩形](https://leetcode-cn.com/problems/largest-rectangle-in-histogram/)
+### [柱状图中最大的矩形(单调栈)](https://leetcode-cn.com/problems/largest-rectangle-in-histogram/)
 
 #### 我的题解
 
@@ -968,7 +1007,7 @@ public:
 };
 ~~~
 
-### [最大矩形](https://leetcode-cn.com/problems/maximal-rectangle/)
+### [最大矩形(单调栈)](https://leetcode-cn.com/problems/maximal-rectangle/)
 
 #### 我的题解
 
@@ -1043,7 +1082,7 @@ public:
 };
 ~~~
 
-### [接雨水](https://leetcode-cn.com/problems/trapping-rain-water/)
+### [接雨水(单调栈)](https://leetcode-cn.com/problems/trapping-rain-water/)
 
 #### 我的题解
 
@@ -1540,6 +1579,295 @@ public:
 };
 ~~~
 
+#### [复原IP地址](https://leetcode-cn.com/problems/restore-ip-addresses/)
+
+##### 我的题解
+
+~~~cpp
+class Solution {
+private:
+    vector<string>ans;
+public:
+    vector<string> restoreIpAddresses(string s) {
+        vector<string> subRes;
+        backtrack(0, subRes, s);
+        
+        return ans;
+    }
+    string join(vector<string> vec, string del){
+        string ret = vec[0];
+        for(int i = 1; i < vec.size(); i++){
+            ret += del + vec[i];
+        }
+        return ret;
+    }
+    /*一共4段  每段的长度不超过3 每段大小不超过255 最短长度是4  最长长度是12*/
+    void backtrack(int start,vector<string> subRes, string s) {
+        if (subRes.size() == 4 && start == s.size() ) {
+            //满4段 或者 遍历完了字符串 加入结果集
+            string subAns = join(subRes, ".");
+            ans.push_back(subAns);
+            return;
+        }
+        
+        //满4段 但是没有遍历完字符串
+        if(subRes.size() == 4 && start < s.size())
+            return;
+        
+        //一共有三种长度 1 2 3
+        for(int len = 1; len <=3; len++){
+            if(start + len - 1  >= s.size())
+                return;//长度超过字符串长度
+            
+            if(len != 1 && s[start] == '0')
+                return;//是0x 0xx
+            
+            //切出当前片段
+            string ss = s.substr(start, len);
+            
+            if(len == 3 && atoi(ss.c_str()) > 255)
+                return;//长度为3时不能大于255
+            
+            subRes.push_back(ss);//压入子结果集
+            backtrack(start + len, subRes, s);
+            subRes.pop_back();//撤销状态 恢复之前的状态
+        }
+    }
+};
+~~~
+
+#### [全排列](https://leetcode-cn.com/problems/permutations/)
+
+##### 我的题解
+
+~~~cpp
+class Solution {
+public:
+    vector<vector<int>> permute(vector<int>& nums) {
+        int n = nums.size();
+        vector<vector<int>> ans;
+        vector<int> temp;
+        vector<int> vis(n, 0);
+        //回溯
+        backtrack(nums, ans, temp, vis);
+        
+        return ans;
+    }
+    
+    void backtrack(vector<int>& nums, vector<vector<int>> & ans, vector<int>& temp, vector<int>& vis){
+        if(temp.size() == nums.size()){
+            ans.push_back(temp);
+            return;
+        }
+        for(int i = 0; i < nums.size(); i++){
+            if(vis[i]){
+                continue;//已经访问了 剪枝
+            }
+            temp.push_back(nums[i]);//选择该数字
+            vis[i] = 1;
+            backtrack(nums, ans, temp, vis);//执行搜索
+            temp.pop_back();//撤销选择该数字
+            vis[i] = 0;
+        }
+    }
+};
+~~~
+
+#### [无重复字符串的排列组合](https://leetcode-cn.com/problems/permutation-i-lcci/)
+
+> **题解1和题解2得到的全排列的顺序是不同的**
+
+##### 我的题解1
+
+> 此处使用的是**交换**。
+
+~~~cpp
+class Solution {
+private:
+    vector<string> ans;//存放解
+public:
+    vector<string> permutation(string s) {
+        if(!s.size())
+            return {};
+        backtrack(0, s);//从第0个字符开始考察
+        
+        return ans;
+    }
+    
+    void backtrack(int startIdx, string s){
+        if(startIdx == s.size() - 1){
+            ans.push_back(s);
+            return;
+        }
+        unordered_set<char> hashset;//存放字符
+        for(int i = startIdx; i < s.size(); i++){
+            if(hashset.count(s[i]) == 1){
+                //存在该元素 剪枝 不考虑该元素
+                continue;
+            }
+            hashset.insert(s[i]);
+            swap(s[startIdx], s[i]);//交换start和其他元素的位置
+            backtrack(startIdx + 1, s);//考虑下一个元素
+            swap(s[startIdx], s[i]);//恢复交换
+        }
+    }
+    
+    /*void swap(char *p, char *q){
+        char temp = *p;
+        *p = *q;
+        *q = temp;
+    }*/
+};
+~~~
+
+##### 我的题解2
+
+~~~cpp
+class Solution {
+private:
+    vector<string> ans;//存放解
+public:
+    vector<string> permutation(string s) {
+        if(!s.size())
+            return {};
+        // vector<bool>used(s.size(), false);//访问数组
+        string temp = "";
+        backtrack(s, temp);//从第0个字符开始考察
+        
+        return ans;
+    }
+    
+    void backtrack(string s, string temp){
+        if(temp.size() == s.size()){
+            ans.push_back(temp);
+            return;
+        }
+        for(int i = 0; i < s.size(); i++){
+            if(temp.find(s[i]) != string::npos){
+                //存在该元素 剪枝 不考虑该元素
+                continue;
+            }
+            temp.push_back(s[i]);
+            backtrack(s, temp);
+            temp.pop_back();
+        }
+    }
+};
+~~~
+
+#### [有重复字符串的排列组合](https://leetcode-cn.com/problems/permutation-ii-lcci/)
+
+> **此处不能使用上一题(无重复字符串的排列组合)中“我的题解2”那种方式求解，但是用“我的题解1”是完全没有问题的，因为它的求解方法中使用的是集合，这样就避免了重复元素。**
+
+##### 我的题解
+
+~~~cpp
+class Solution {
+private:
+    vector<string> ans;//存放解
+public:
+    vector<string> permutation(string s) {
+        if(!s.size())
+            return {};
+        backtrack(0, s);//从第0个字符开始考察
+        
+        return ans;
+    }
+    
+    void backtrack(int startIdx, string s){
+        if(startIdx == s.size() - 1){
+            ans.push_back(s);
+            return;
+        }
+        unordered_set<char> hashset;//存放字符
+        for(int i = startIdx; i < s.size(); i++){
+            if(hashset.count(s[i]) == 1){
+                //存在该元素 剪枝 不考虑该元素
+                continue;
+            }
+            hashset.insert(s[i]);
+            swap(s[startIdx], s[i]);//交换start和其他元素的位置
+            backtrack(startIdx + 1, s);//考虑下一个元素
+            swap(s[startIdx], s[i]);//恢复交换
+        }
+    }
+    
+    /*void swap(char *p, char *q){
+        char temp = *p;
+        *p = *q;
+        *q = temp;
+    }*/
+};
+~~~
+
+
+
+#### [第k个排列序列](https://leetcode-cn.com/problems/permutation-sequence/)
+
+> 给出集合 `[1,2,3,...,n]`，其所有元素共有 `n!` 种排列。
+
+##### 我的题解
+
+~~~cpp
+class Solution {
+private:
+    int g_n;
+    int g_k;
+public:
+    string getPermutation(int n, int k) {
+        g_n = n;
+        g_k = k;
+        string ans = "";
+        vector<int> factor = getFactor(n);//阶乘数组
+        vector<int> vis(n + 1, 0);//访问数组
+        dfs(0, ans, factor, vis);//深度优先搜索
+        return ans;
+    }
+
+    /*计算阶乘*/
+    vector<int> getFactor(int n)
+    {
+        vector<int>factor(n + 1, 0);
+        factor[0] = 1;
+        for (int i = 1; i <= n; i++) {
+            factor[i] = factor[i - 1] * i;
+        }
+
+        return factor;
+    }
+
+    /*深度优先搜索 直接到达目的结点 通过剪枝 忽略不需要考虑的结点*/
+    void dfs(int start, string& ans, vector<int>& factor, vector<int>& vis) {
+        if (ans.size() == g_n) {
+            return;
+        }
+        int cnt = factor[g_n - 1 - start];
+        //第一次搜索的时候其含义为
+        //以1开头，剩余字符串形成的全排列个数=(n - 1)!
+        //cout <<"cnt: "<< cnt << endl;
+        for (int i = 1; i <= g_n; i++) {
+            if (vis[i]) {//被访问过了 剪枝
+                continue;
+            }
+            if (cnt < g_k) {//当前字符串的全排列个数 < k 剪枝
+                //k需要减去上一轮要剪枝的叶子结点个数 即上一轮字符串形成的全排列个数
+                g_k -= cnt;
+                //cout << "k :" << g_k << endl;
+                continue;
+            }
+            //如果cnt >= k 说明第k个全排列在当前字符串的全排列(个数)中
+            vis[i] = 1;
+            ans.push_back(i + '0');
+            dfs(start + 1, ans, factor, vis);
+            //此处不需要回溯  直接深度优先搜索即可
+            //设计的是一下子访问到目标(第k个)叶子结点因此不需要重置vis数组  
+            return;
+            //此处需要return, 后面的数没有必要去尝试了
+        }
+    }
+};
+~~~
+
 
 
 ## 动态规划(DP)
@@ -1684,11 +2012,9 @@ public:
 };
 ~~~
 
-### [买卖股票的最佳时机](https://leetcode-cn.com/problems/best-time-to-buy-and-sell-stock/)
+### [*买卖股票的最佳时机](https://leetcode-cn.com/problems/best-time-to-buy-and-sell-stock/)
 
-#### 我的题解
-
-> 只能完成一笔交易
+#### 我的题解(贪心)
 
 ~~~cpp
 class Solution {
@@ -1713,7 +2039,80 @@ public:
 };
 ~~~
 
-### [买卖股票的最佳时机 II](https://leetcode-cn.com/problems/best-time-to-buy-and-sell-stock-ii/)
+#### 我的题解(动规)
+
+> 只能完成一笔交易
+
+~~~cpp
+//昨天持股和今天持股有很大的关系 因此需要将是否持股这个
+//状态设计到状态数组中
+/*
+令 dp[i][0]表示第i天结束的时候，手上不持股 状态为0 获得的最大利润 
+令 dp[i][1]表示第i天结束的时候，手上持股 状态为1 获得的最大利润 
+因此最后计算出的dp[n-1][0]为最终的结果 即到最后一天结束的时候，不持股获得的最大利润 
+*/ 
+class Solution {
+public:
+    int maxProfit(vector<int>& prices) {
+    	int n = prices.size();
+		if(n < 2)
+			return 0;
+        vector<vector<int>> dp(n, vector<int>(2, 0));
+		dp[0][0] = 0;//第0天不持股显然获得的利润为0
+		dp[0][1] = -prices[0];//第0天持股，获得的利润为当天股价的相反数
+		
+		//主要是要理清今天持股、不持股 和 昨天持股和不持股的关联 
+		for(int i = 1; i < n; i++){
+			//今天不持股 1.昨天不持股，今天啥都不做 2.昨天持股，今天卖出 
+			dp[i][0] = max(dp[i - 1][0], dp[i - 1][1] + prices[i]);
+			//第i天不持股最大的利润是  第i-1天不持股和第i-1天持股第i天卖出获得利润的较大值
+			//今天持股 1.昨天持股，今天啥都不做 2. 昨天不持股，今天买入 
+			dp[i][1] = max(dp[i - 1][1], -prices[i]);
+			//第i天持股最大的利润是 第i-1天持股和 第i天买入获得利润 的较大者 
+			//由于只能交易一次，因此今天买入获得的利润只能是当天股价的相反数 
+		} 
+		
+		return dp[n - 1][0]; 
+    }
+}; 
+
+//空间优化之后
+//从上面的代码中可以看出 循环中更新dp数组只与前一天的是否持股有关 因此可以优化到一维
+//========================================================================
+//昨天持股和今天持股有很大的关系 因此需要将是否持股这个
+//状态设计到状态数组中
+/*
+令 dp[i][0]表示第i天结束的时候，手上不持股 状态为0 获得的最大利润 
+令 dp[i][1]表示第i天结束的时候，手上持股 状态为1 获得的最大利润 
+因此最后计算出的dp[n-1][0]为最终的结果 即到最后一天结束的时候，不持股获得的最大利润 
+*/ 
+class Solution {
+public:
+    int maxProfit(vector<int>& prices) {
+    	int n = prices.size();
+		if(n < 2)
+			return 0;
+        vector<int> dp(2, 0);
+		dp[0]= 0;//第0天不持股显然获得的利润为0
+		dp[1] = -prices[0];//第0天持股，获得的利润为当天股价的相反数
+		
+		//主要是要理清今天持股、不持股 和 昨天持股和不持股的关联 
+		for(int i = 1; i < n; i++){
+			//今天不持股 1.昨天不持股，今天啥都不做 2.昨天持股，今天卖出 
+			dp[0] = max(dp[0], dp[1] + prices[i]);
+			//第i天不持股最大的利润是  第i-1天不持股和第i-1天持股第i天卖出获得利润的较大值
+			//今天持股 1.昨天持股，今天啥都不做 2. 昨天不持股，今天买入 
+			dp[1] = max(dp[1], -prices[i]);
+			//第i天持股最大的利润是 第i-1天持股和 第i天买入获得利润 的较大者 
+			//由于只能交易一次，因此今天买入获得的利润只能是当天股价的相反数 
+		} 
+		
+		return dp[0]; 
+    }
+}; 
+~~~
+
+### [*买卖股票的最佳时机 II](https://leetcode-cn.com/problems/best-time-to-buy-and-sell-stock-ii/)
 
 #### 我的题解(贪心)
 
@@ -1735,7 +2134,82 @@ public:
 };
 ~~~
 
-### [买卖股票的最佳时机 III(困难)](https://leetcode-cn.com/problems/best-time-to-buy-and-sell-stock-iii/)
+#### 我的题解(动规)
+
+~~~cpp
+//昨天持股和今天持股有很大的关系 因此需要将是否持股这个
+//状态设计到状态数组中
+/*
+令 dp[i][0]表示第i天结束的时候，手上不持股 状态为0 获得的最大利润 
+令 dp[i][1]表示第i天结束的时候，手上持股 状态为1 获得的最大利润 
+因此最后计算出的dp[n-1][0]为最终的结果 即到最后一天结束的时候，不持股获得的最大利润 
+*/ 
+class Solution {
+public:
+    int maxProfit(vector<int>& prices) {
+    	int n = prices.size();
+		if(n < 2)
+			return 0;
+        vector<vector<int>> dp(n, vector<int>(2, 0));
+		dp[0][0] = 0;//第0天不持股显然获得的利润为0
+		dp[0][1] = -prices[0];//第0天持股，获得的利润为当天股价的相反数
+		
+		//主要是要理清今天持股、不持股 和 昨天持股和不持股的关联 
+		for(int i = 1; i < n; i++){
+			//今天不持股 1.昨天不持股，今天啥都不做 2.昨天持股，今天卖出 
+			dp[i][0] = max(dp[i - 1][0], dp[i - 1][1] + prices[i]);
+			//第i天不持股最大的利润是  第i-1天不持股和第i-1天持股第i天卖出获得利润的较大值
+			//今天持股 1.昨天持股，今天啥都不做 2. 昨天不持股，今天买入 
+			dp[i][1] = max(dp[i - 1][1], dp[i - 1][0] - prices[i]);
+			//第i天持股最大的利润是 第i-1天持股和 第i天买入获得利润 的较大者 
+			//由于可以交易多次，因此今天买入获得的利润是 前一天不持股 今天买入 获得的利润 
+		} 
+		
+		return dp[n - 1][0]; 
+    }
+}; 
+
+//空间优化到一维 同上题
+
+//昨天持股和今天持股有很大的关系 因此需要将是否持股这个
+//状态设计到状态数组中
+/*
+令 dp[i][0]表示第i天结束的时候，手上不持股 状态为0 获得的最大利润 
+令 dp[i][1]表示第i天结束的时候，手上持股 状态为1 获得的最大利润 
+因此最后计算出的dp[n-1][0]为最终的结果 即到最后一天结束的时候，不持股获得的最大利润 
+*/ 
+class Solution {
+public:
+    int maxProfit(vector<int>& prices) {
+    	int n = prices.size();
+		if(n < 2)
+			return 0;
+        vector<int> dp(2, 0);
+		dp[0] = 0;//第0天不持股显然获得的利润为0
+		dp[1] = -prices[0];//第0天持股，获得的利润为当天股价的相反数
+		
+		//主要是要理清今天持股、不持股 和 昨天持股和不持股的关联 
+		for(int i = 1; i < n; i++){
+			//今天不持股 1.昨天不持股，今天啥都不做 2.昨天持股，今天卖出 
+			dp[0] = max(dp[0], dp[1] + prices[i]);
+			//第i天不持股最大的利润是  第i-1天不持股和第i-1天持股第i天卖出获得利润的较大值
+			//今天持股 1.昨天持股，今天啥都不做 2. 昨天不持股，今天买入 
+			dp[1] = max(dp[1], dp[0] - prices[i]);
+			//第i天持股最大的利润是 第i-1天持股和 第i天买入获得利润 的较大者 
+			//由于可以交易多次，因此今天买入获得的利润是 前一天不持股 今天买入 获得的利润 
+		} 
+		
+		return dp[0]; 
+    }
+}; 
+
+//空间优化到一维 同上题
+
+~~~
+
+
+
+### [*买卖股票的最佳时机 III(困难)](https://leetcode-cn.com/problems/best-time-to-buy-and-sell-stock-iii/)
 
 #### 我的题解(动规)
 
@@ -2484,7 +2958,9 @@ public:
 };
 ~~~
 
-### [字符串的排列(哈希+滑动窗口)](https://leetcode-cn.com/problems/permutation-in-string/)
+### [包含字符串的排列(哈希+滑动窗口)](https://leetcode-cn.com/problems/permutation-in-string/)
+
+> 判断 **s2** 是否包含 **s1** 的排列。
 
 #### 我的题解
 
@@ -2701,7 +3177,9 @@ public:
 
 ## 分治
 
-### [数组中的第K个最大元素](https://leetcode-cn.com/problems/kth-largest-element-in-an-array/)
+### [数组中的第k个最大元素](https://leetcode-cn.com/problems/kth-largest-element-in-an-array/)
+
+#### 我的题解
 
 ~~~cpp
 class Solution {
@@ -2750,6 +3228,10 @@ public:
     }
 };
 ~~~
+
+### [最小的k个数](https://leetcode-cn.com/problems/zui-xiao-de-kge-shu-lcof/)
+
+#### 我的题解
 
 
 
@@ -3007,6 +3489,426 @@ public:
 
 ## 排序
 
+### C++STL中sort工作原理
+
+~~~
+STL中的sort()，在数据量大时，采用快排quicksort，分段递归；一旦分段后的数量小于某个门限值，改用插入排
+序Insertion sort，避免quicksort深度递归带来的过大的额外负担，如果递归层次过深，还会改用
+heapsort(堆排序)。
+~~~
+
+#### sort & qsort
+
+~~~cpp
+/*
+qsort的自定义比较函数 规则：
+compar 参数指向一个比较两个元素的函数。
+比较函数的原型应该像下面这样。注意两个形参必须是 const void * 型，
+同时在调用 compar 函数（compar 实质为函数指针，这里称它所指向的函
+数也为 compar）时，传入的实参也必须转换成const void * 型。在 compar
+函数内部会将 const void * 型转换成实际类型，见下。
+
+int compar(const void *p1, const void *p2);
+
+如果 compar 返回值小于 0（< 0），那么 p1 所指向元素会被排在p2所指
+向元素的前面;如果 compar 返回值等于 0（= 0），那么 p1 所指向元素与
+ p2 所指向元素的顺序不确定;如果 compar 返回值大于 0（> 0），那么 p1
+  所指向元素会被排在 p2 所指向元素的后面。
+*/
+#include<iostream>
+#include<cstdlib>
+#include<algorithm>
+using namespace std;
+
+int compar(const void* p1, const void* p2) {
+	return *(int*)p1 - *(int*)p2;
+}
+
+bool compar1(int p1, int p2) {
+	return p1 < p2;//升序排列
+	//return p1 > p2; //降序排列 
+}
+
+class Student {
+public:
+	int id;
+	string name;
+	double grade;
+
+	/*友元函数内部重载可以多个参数*/
+	friend bool operator<(const Student& s1, const Student& s2)
+	{
+		return s1.id < s2.id;
+	}
+
+	/*（非友元函数）内部重载只能一个参数*/
+//	bool operator<(const Student& s) {
+//		//return id > s.id;//降序排列
+//		return id < s.id;//升序排列
+
+//	}
+};
+
+//bool operator<(const Student& s1, const Student& s2)
+//{
+//	return s1.id < s2.id;
+//}
+int main() {
+	const int maxn = 100;
+	int r[] = { 81, 68, 33, 40 ,89, 72, 75, 21, 75, 3 ,63, 15, 54 };
+
+	//C库函数
+	//qsort(r, sizeof(r)/sizeof(int), sizeof(int),compar);
+
+	//C++ algorithm库函数 默认升序排列
+	sort(r, r + 13, compar1);
+
+	for (int i = 0; i < 13; i++) {
+		cout << r[i] << " ";
+	}
+	cout << endl;
+
+	Student stu[4];
+	stu[0] = { 1, "aaa", 120.22 };
+	stu[1] = { 2, "bbb", 221.11 };
+	stu[2] = { 3, "ccc", 232.11 };
+	stu[3] = { 4, "ddd", 333.11 };
+	sort(stu, stu + 4);
+	for (int i = 0; i < 4; i++) {
+		cout << stu[i].name << endl;
+	}
+	system("pause");
+	return 0;
+}
+~~~
+
+
+
+### [内部排序算法(8种)](https://blog.csdn.net/qq_41139677/article/details/108912742)
+
+#### 快速排序
+
+~~~cpp
+/*排列高低子表元素 最后确定枢轴位置*/
+int  Partition(int r[], int low, int high)
+{
+    int pivotkey = r[low];//枢轴记录为r[low]
+
+    while (low < high) {
+        while (low < high && r[high] >= pivotkey) {
+            high--;
+        }//r[high] < pivotkey
+
+        //交换high和low指向的记录
+        Swap1(&r[high], &r[low]);
+        //Swap2(r[high], r[low]);
+
+        while (low < high && r[low] <= pivotkey) {
+            low++;
+        }//r[low] > pivotkey
+
+        //交换low和high指向的记录
+        Swap1(&r[low], &r[high]);
+    }
+    return low;
+}
+
+/*第一种方法 快速排序*/ 
+void QuickSort(int r[], int low, int high) {
+    if (low < high)
+    {
+        int pivotloc = Partition(r, low, high);
+        QuickSort(r, low, pivotloc - 1); //对低子表进行递归排序
+        QuickSort(r, pivotloc + 1, high);//对高子表进行递归排序
+    }
+}
+
+/*第二种 快排方法*/
+int QuickSort_(int r[], int low, int high)
+{
+	if(low < high)
+	{
+		int pivotkey = r[low];//枢轴记录为r[low]
+		int pl = low;
+	    int ph = high;
+	    
+	    while (low < high) 
+		{	
+	        while (low < high && r[high] >= pivotkey) {
+	            high--;
+	        }//r[high] < pivotkey
+	        
+	        if(low < high)
+	        	r[low++] = r[high];
+	
+	        while (low < high && r[low] <= pivotkey) {
+	            low++;
+	        }//r[low] > pivotkey
+	        
+	        if(low < high)
+	        	r[high--] = r[low];
+    	}//完成一次快排 
+    	
+		int pivotloc = low;//确定枢轴位置为low 
+    	
+		//重要!!!!!! 
+    	r[pivotloc] = pivotkey; //一次快排结束之后 以low为分界线 r[low]处为上次快排的枢轴记录 
+    	
+		QuickSort_(r, pl, pivotloc - 1);//对低字表进行递归排序
+		QuickSort_(r, pivotloc + 1, ph);//对高子表进行递归排序 
+	}
+}
+
+~~~
+
+#### 归并排序
+
+~~~cpp
+/*合并子表*/ 
+void Merge(int r[], int left, int mid, int right)
+{
+	//9个元素  left = 1; right = 9+1; mid = (1+9+1)/2 = 5;  10个元素 left = 1; right = 10; mid = 5; 
+	int n1 = mid - left;//5 - 1 = 4 
+	for(int i = 0; i < n1; i++)
+	{
+		L[i] = r[left + i]; //1 2 3 4 ... 
+	} 
+	int n2 = right - mid; //9+1 - 5 = 5
+	for(int j = 0; j < n2; j++)
+	{
+		R[j] = r[mid + j];
+	}
+	L[n1] = inf;
+	R[n2] = inf;//末尾元素初始化为无穷大
+	
+	int i = 0;//L[]元素指针
+	int j = 0;//R[]元素指针 
+	for(int k = left; k < right; k++)
+	{
+		if(L[i] <= R[j])
+			r[k] = L[i++];
+		else
+			r[k] = R[j++];	
+	} 
+} 
+
+/*归并排序*/
+void MergeSort(int r[], int left, int right)
+{
+	if(left < right - 1)//right = n + 1 ; left = 1; 
+	{
+		//下标是1开始所以需要right = n + 1,这样分成左右子表时的元素下标才正确 
+		int mid = (left + right) / 2; 
+		MergeSort(r, left, mid);//对左子表进行递归合并排序 
+		MergeSort(r, mid, right);//对右子表进行递归合并排序 
+		Merge(r, left, mid, right);//合并 左右子表 
+	}
+}
+~~~
+
+#### 堆排序
+
+~~~cpp
+/*
+调整为大顶堆
+子节点下标需要注意：
+1. 若是待排序序列下标是0开始的 
+	则父节点的下标是<序列长度/2 = j>,
+		左孩子结点的下标是<2*j>,
+		右孩子结点的下标是<2*j+1>
+2. 若是待排序序列下标是1开始的 
+	则父节点的下标是<序列长度/2-1 = j>, 
+		左孩子结点的下标是<2*j+1>,
+		右孩子结点的下标是<2*j+2> 
+*/
+void HeapAdjust(int r[], int parent, int n)
+{
+	// 调整r[parent ... n]为大顶堆 parent是父节点  
+	// n下标最大的子节点 也就是待排序序列的长度 
+	// 其实调整的值为 以parent为根节点的二叉树 满足大/小顶堆的定义 
+	int temp = r[parent];//父节点的值暂存 
+	
+	for(int j = 2 * parent; j <= n; j++)
+	{
+		//右孩子是最大的结点 否则 左孩子是最大的节点 
+		if(j < n && r[j] < r[j + 1])  ++j; 
+		
+		//父节点值>=右孩子结点值
+		if(temp >= r[j]) break;
+		
+		//父节点值小于左/右孩子结点值
+		r[parent] = r[j];//父节点值替换为左/右孩子结点值 
+		parent = j;//parent暂存子节点下标 
+	}
+	//若break，父节点值无需右孩子结点交换值
+	//否则，子节点的值替换为父节点的值 
+	r[parent] = temp;	
+} 
+
+/*堆排序*/
+void HeapSort(int r[])
+{
+	//从第一个非叶子结点n/2开始进行初始大顶堆构建 
+	//元素个数为n个 下标从1开始的序列 非叶子节点下标为 n/2 ~ 1 
+	for(int i = n / 2; i > 0; i--)
+	{
+		HeapAdjust(r, i, n); 
+	} 
+	
+	for(int i = n; i > 1; i--)
+	{
+		//将大顶堆第一个值（最大）与最后一个值交换 
+		//最后一个值变成最大的 第一个值变成堆顶元素 
+		int t = r[1];
+		r[1] = r[i];
+		r[i] = t; 
+		
+		//此时还需要调整堆 将1~i-1调整为大顶堆 r[1]为整个堆的根节点 调整即可 
+		HeapAdjust(r, 1, i - 1); 
+	} 
+}
+~~~
+
+#### 插入排序
+
+~~~cpp
+void InsertSort(int r[])
+{
+
+    //gap = 1的shell sort
+    for (int i = 2; i <= n; i++)
+    {
+        if (r[i] < r[i - 1])
+        {
+            r[0] = r[i];
+            r[i] = r[i - 1];//向后移动
+
+            int j = i - 2;
+            while (r[0] < r[j]) //若是r[0]比r[j]小
+            {
+                r[j + 1] = r[j];//r[j]向后移动
+                --j;//向前找比r[0]大的记录
+            }//r[0] >= r[j]
+            r[j + 1] = r[0];
+        }
+    }
+}
+~~~
+
+#### 折半插入排序
+
+~~~cpp
+void BiInsertSort(int r[])
+{
+    for (int i = 2; i <= n; i++)
+    {
+        r[0] = r[i];
+        int low = 1;
+        int high = i - 1;
+        while (low <= high)
+        {
+            //int mid = (high + low) / 2;
+            //防止溢出
+            int  mid = high - (high - low) / 2;
+            if (r[0] < r[mid])
+                high = mid - 1;
+            else low = mid + 1;
+        }
+
+        int j = i - 1;
+        while (j >= high + 1)
+        {
+            r[j + 1] = r[j];
+            --j;
+        }//j < hight + 1  j == high
+        r[j + 1] = r[0];
+    }
+}
+~~~
+
+#### 选择排序
+
+~~~cpp
+//选择排序
+void SelectSort(int r[])
+{
+	for(int i = 1; i < n; i++)// n-1趟 
+	{
+		int k = i;
+		for(int j = i + 1; j <= n; j++)//选择出剩余元素中的最小值 
+		{
+			if(r[j] < r[k])
+				k = j; 
+		}
+		if(k != i)//将第i个元素和剩余元素中的最小值交换 
+		{
+			Swap1(&r[k], &r[i]);
+			//int t = r[i]; 
+			//r[i] = r[k];
+			//r[k] = t;
+		}
+	}
+} 
+~~~
+
+#### 希尔排序
+
+~~~cpp
+void ShellInsert(int r[], int gap)
+{
+    for (int i = gap + 1; i <= n; i++)
+    {
+        if (r[i] < r[i - gap])
+        {
+            r[0] = r[i];
+            int j = i - gap;
+            while (j > 0 && r[0] < r[j])
+            {
+                //向后移动元素
+                r[j + gap] = r[j];
+                j -= gap;
+            }
+            r[j + gap] = r[0];
+        }
+    }
+
+}
+
+/*
+希尔排序
+delta数组是间隔数组 每个元素代表间隔gap大小
+t表示delta数组的元素个数
+*/
+void ShellSort(int r[], int delta[], int t)
+{
+    for (int i = 0; i < t; i++)
+    {
+        ShellInsert(r, delta[i]);//对每一组子序列进行插入排序
+    }
+}
+~~~
+
+#### 冒泡排序
+
+~~~cpp
+/*冒泡排序*/
+void BubbleSort(int r[])
+{
+    for (int i = 1; i < n; i++) //n - 1趟 
+    {
+        for (int j = 1; j <= n - i; j++) //每趟排序会将一个最大值浮到最后面
+        {
+            if (r[j + 1] < r[j])//交换 将大数放在后面 
+            {
+                int t = r[j + 1];
+                r[j + 1] = r[j];
+                r[j] = t;
+            }
+        }
+    }
+}
+~~~
+
 ### [合并区间](https://leetcode-cn.com/problems/merge-intervals/)
 
 #### 我的题解
@@ -3040,3 +3942,747 @@ public:
 
 ## 二分查找
 
+### 基础模板及讲解
+
+#### 4种基本情况
+
+##### 查找第一个值等于给定值的元素
+
+~~~cpp
+// 查找第一个值等于给定值的元素
+int firstEquals(vector<int>arr, int target) {
+    int l = 0, r = arr.size() - 1;
+    while (l < r) {
+        int mid = l + ((r - l) >> 1);
+        if (arr[mid] < target) l = mid + 1;
+        else r = mid; // 收缩右边界不影响 first equals
+    }
+    if (arr[l] == target && (l == 0 || arr[l - 1] < target)) return l;
+    return -1;
+}
+~~~
+
+##### 查找最后一个值等于给定值的元素
+
+~~~cpp
+// 查找最后一个值等于给定值的元素
+int lastEquals(vector<int>arr, int target) {
+    int l = 0, r = arr.size() - 1;
+    while (l < r) {
+        int mid = l + ((r - l + 1) >> 1);
+        if (arr[mid] > target) r = mid - 1;
+        else l = mid; // 收缩左边界不影响 last equals
+    }
+    if (arr[l] == target && (l == arr.size() - 1 || arr[l + 1] > target)) return l;
+    return -1;
+}
+~~~
+
+##### 查找第一个大于等于给定值的元素
+
+~~~cpp
+// 查找第一个大于等于给定值的元素
+int firstLargeOrEquals(vector<int>arr, int target) {
+    int l = 0, r = arr.size() - 1;
+    while (l < r) {
+        int mid = l + ((r - l) >> 1);
+        if (arr[mid] < target) l = mid + 1;
+        else r = mid; // 收缩右边界不影响 first equals
+    }
+    if (arr[l] >= target && (l == 0 || arr[l - 1] < target)) return l; // >=
+    return -1;
+}
+~~~
+
+##### 查找最后一个小于等于给定值的元素
+
+~~~cpp
+// 查找最后一个小于等于给定值的元素
+int lastLessOrEquals(vector<int>arr, int target) {
+    int l = 0, r = arr.size() - 1;
+    while (l < r) {
+        int mid = l + ((r - l + 1) >> 1);
+        if (arr[mid] > target) r = mid - 1;
+        else l = mid; // 收缩左边界不影响 last equals
+    }
+    if (arr[l] <= target && (l == arr.size() - 1 || arr[l + 1] > target)) return l; // <=
+    return -1;
+}
+~~~
+
+##### 具体说明
+
+~~~
+从一个元素什么时候不是解开始考虑下一轮搜索区间是什么 
+	一部分肯定不存在解 另一部分可能存在解
+
+while(left <= right) 这种写法表示在循环体内部直接查找元素；
+退出循环的时候 left 和 right 不重合，区间 [left, right] 是空区间。
+
+while(left < right) 这种写法表示在循环体内部排除元素；
+退出循环的时候 left 和 right 重合，区间 [left, right] 只剩下成 1个元素
+这个元素 有可能 就是我们要找的元素。
+vector<int> vec1{ 1,1,1,1,1,2,3,4,5,6,7 };
+int l = 0;
+int r = vec1.size() - 1;
+int mid = l + ((r - l) >> 1);//向下取整 奇数个元素 向下向上取整都一样
+int mid = l + ((r - l + 1) >> 1); //向上取整
+//偶数个元素 向下取整和向上取整不一样
+//向上向下取整的区别在于 在剩余两个元素的时候 此时l = x; r = x + 1; 那么l+r/2向下取整是x 向上取整是x+1
+//此时收缩边界的判断条件中 若mid被分到左半部分，说明right = mid 需要向下取整 下次l = mid+1 = r 跳出循环
+//若mid被分到右半部分， 说明l = mid, 需要向上取整，下次r = mid - 1 = l 跳出循环 
+//上述情况都是可以缩小区间 进而可以跳出循环 否则一旦进入的分支不能缩小区间 会陷入死循环
+//cout << mid << endl;
+cout << firstLargeOrEquals(vec1,9) << endl;
+    
+
+~~~
+
+#### 模板1
+
+~~~cpp
+int binarySearch(vector<int>& nums, int target){
+  if(nums.size() == 0)
+    return -1;
+
+  int left = 0, right = nums.size() - 1;
+  while(left <= right){
+    // Prevent (left + right) overflow
+    int mid = left + (right - left) / 2;
+    if(nums[mid] == target){ return mid; }
+    else if(nums[mid] < target) { left = mid + 1; }
+    else { right = mid - 1; }
+  }
+
+  // End Condition: left > right
+  return -1;
+}
+~~~
+
+##### 关键属性
+
+- 二分查找的最基础和最基本的形式。
+- 查找条件可以在不与元素的两侧进行比较的情况下确定（或使用它周围的特定元素）。
+- 不需要后处理，因为每一步中，你都在检查是否找到了元素。如果到达末尾，则知道未找到该元素。
+
+##### 区分语法
+
+- 初始条件：`left = 0, right = length-1`
+- 终止：`left > right`
+- 向左查找：`right = mid-1`
+- 向右查找：`left = mid+1`
+
+#### 模板2
+
+~~~cpp
+int binarySearch(vector<int>& nums, int target){
+  if(nums.size() == 0)
+    return -1;
+
+  int left = 0, right = nums.size();
+  while(left < right){
+    // Prevent (left + right) overflow
+    int mid = left + (right - left) / 2;
+    if(nums[mid] == target){ return mid; }
+    else if(nums[mid] < target) { left = mid + 1; }
+    else { right = mid; }
+  }
+
+  // Post-processing:
+  // End Condition: left == right
+  if(left != nums.size() && nums[left] == target) return left;
+  return -1;
+}
+~~~
+
+##### 关键属性
+
+- 一种实现二分查找的高级方法。
+- 查找条件需要访问元素的直接右邻居。
+- 使用元素的右邻居来确定是否满足条件，并决定是向左还是向右。
+- 保证查找空间在每一步中至少有 2 个元素。
+- 需要进行后处理。 当你剩下 1 个元素时，循环 / 递归结束。 需要评估剩余元素是否符合条件。
+
+##### 区分语法
+
+- 初始条件：`left = 0, right = length`
+- 终止：`left == right`
+- 向左查找：`right = mid`
+- 向右查找：`left = mid+1`
+
+#### 模板3
+
+~~~cpp
+int binarySearch(vector<int>& nums, int target){
+    if (nums.size() == 0)
+        return -1;
+
+    int left = 0, right = nums.size() - 1;
+    while (left + 1 < right){
+        // Prevent (left + right) overflow
+        int mid = left + (right - left) / 2;
+        if (nums[mid] == target) {
+            return mid;
+        } else if (nums[mid] < target) {
+            left = mid;
+        } else {
+            right = mid;
+        }
+    }
+
+    // Post-processing:
+    // End Condition: left + 1 == right
+    if(nums[left] == target) return left;
+    if(nums[right] == target) return right;
+    return -1;
+}
+~~~
+
+##### 关键属性
+
+- 实现二分查找的另一种方法。
+- 搜索条件需要访问元素的直接左右邻居。
+- 使用元素的邻居来确定它是向右还是向左。
+- 保证查找空间在每个步骤中至少有 3 个元素。
+- 需要进行后处理。 当剩下 2 个元素时，循环 / 递归结束。 需要评估其余元素是否符合条件。
+
+##### 区分语法
+
+- 初始条件：`left = 0, right = length-1`
+- 终止：`left + 1 == right`
+- 向左查找：`right = mid`
+- 向右查找：`left = mid`
+
+### [x 的平方根](https://leetcode-cn.com/problems/sqrtx/)
+
+#### 我的题解
+
+~~~cpp
+class Solution {
+public:
+    int mySqrt(int x) {
+        int l = 0;
+        int r = x;
+        int ans = 0;
+        while(l <= r){
+            int mid = l + (r - l) / 2;
+            if((long long)mid * mid <= x){
+                l = mid + 1;
+                ans = mid;
+            }else{
+                r = mid - 1;
+            }
+        }
+        return ans;
+    }
+};
+~~~
+
+### [搜索插入位置(简单)](https://leetcode-cn.com/problems/search-insert-position/)
+
+#### 我的题解
+
+~~~cpp
+class Solution {
+public:
+    int searchInsert(vector<int>& nums, int target) {
+        int n = nums.size();
+        int l = 0;
+        int r = n; //因为插入的元素位置可能是最后一个元素之后 因此r可以初始化为n
+//         int ans = n;
+//         while(l <= r){
+//             int mid = l + ((r - l)>> 1);
+//             if(nums[mid] < target){
+//                 l = mid + 1;
+//             }
+//             else{
+//                 r = mid - 1;
+//                 ans = mid;
+//             }
+//         }
+        
+//         return ans;
+        //模板解题
+        while(l < r){
+            int mid = l + (r - l) / 2;
+            if(nums[mid] < target)
+                l = mid + 1;
+            else
+                r = mid;
+        }
+        
+        return l;
+    }
+};
+~~~
+
+
+
+### [搜索旋转排序数组](https://leetcode-cn.com/problems/search-in-rotated-sorted-array/)
+
+> 无重复数字
+
+#### 我的题解
+
+~~~cpp
+class Solution {
+public:
+    int search(vector<int>& nums, int target) {
+        int n = nums.size();
+        int l = 0;
+        int r = n - 1;
+        while(l <= r){
+            int mid = l + (r - l) / 2;
+            if(nums[mid] == target) return mid;
+            if(nums[mid] >= nums[0]){ //nums[0]是分界点
+                if(nums[mid] > target && target >= nums[0])
+                    r = mid - 1;
+                else
+                    l = mid + 1;
+            }
+            else{
+                if(nums[mid] < target && target <= nums[n - 1])
+                    l = mid + 1;
+                else
+                    r = mid - 1;
+            }
+            //两种方法都可 前一种好理解
+            /*
+             if(nums[mid] >= nums[l]){ //nums[0]是分界点
+                if(nums[mid] > target && target >= nums[l])
+                    r = mid - 1;
+                else
+                    l = mid + 1;
+            }
+            else{
+                if(nums[mid] < target && target <= nums[r])
+                    l = mid + 1;
+                else
+                    r = mid - 1;
+            }
+            */
+        }
+        
+        return -1;
+    }
+};
+~~~
+
+### [搜索旋转排序数组 II](https://leetcode-cn.com/problems/search-in-rotated-sorted-array-ii/)
+
+> 有重复数字
+
+#### 我的题解
+
+~~~cpp
+class Solution {
+public:
+    bool search(vector<int>& nums, int target) {
+        int n = nums.size();
+        int l = 0;
+        int r = n - 1;
+
+        if(!n) return false;
+        int l0 = 0;
+        int r0 = n - 1;
+        
+        while(l <= r){
+            int mid = l + (r - l) / 2;
+            if(nums[mid] == target) return true;
+            if(nums[l] != nums[r]){
+                if(nums[mid] >= nums[l0]){
+                    if(target >= nums[0] && target < nums[mid])
+                        r = mid - 1;
+                    else
+                        l = mid + 1;
+                }
+                else {
+                    if(target > nums[mid] && target <= nums[r0])
+                        l = mid + 1;
+                    else
+                        r = mid - 1;
+                }
+            }
+            else{//nums[l] == nums[r]
+                if(nums[l] == target)
+                    return true;
+                //将左右端相同的数字剔除 问题就会转化成不含重复数字
+                //或者剔除一端的数字也可
+                l0 = ++l;
+                r0 = --r;
+            }
+        }
+        return false;
+    }
+};
+/*
+public class Solution {
+
+    public boolean search(int[] nums, int target) {
+        int len = nums.length;
+        if (len == 0) {
+            return false;
+        }
+
+        int left = 0;
+        int right = len - 1;
+
+        while (left < right) {
+            int mid = (left + right) >>> 1;
+            if (nums[mid] > nums[left]) {
+                if (nums[left] <= target && target <= nums[mid]) {
+                    // 落在前有序数组里
+                    right = mid;
+                } else {
+                    left = mid + 1;
+                }
+            } else if (nums[mid] < nums[left]) {
+                // 让分支和上面分支一样
+                if (nums[mid] < target && target <= nums[right]) {
+                    left = mid + 1;
+                } else {
+                    right = mid;
+                }
+            } else {
+                // 要排除掉左边界之前，先看一看左边界可以不可以排除
+                if (nums[left] == target) {
+                    return true;
+                } else {
+                    left = left + 1;
+                }
+            }
+
+        }
+        // 后处理，夹逼以后，还要判断一下，是不是 target
+        return nums[left] == target;
+    }
+}
+
+作者：liweiwei1419
+链接：https://leetcode-cn.com/problems/search-in-rotated-sorted-array-ii/solution/er-fen-cha-zhao-by-liweiwei1419/
+来源：力扣（LeetCode）
+著作权归作者所有。商业转载请联系作者获得授权，非商业转载请注明出处。
+*/
+~~~
+
+### [寻找旋转排序数组中的最小值](https://leetcode-cn.com/problems/find-minimum-in-rotated-sorted-array/)
+
+> 无重复数字
+
+#### 我的题解
+
+~~~cpp
+class Solution {
+public:
+    int findMin(vector<int>& nums) {
+        int n = nums.size();
+        int l = 0;
+        int r = n - 1;
+        
+        while(l < r){
+            int mid = l + (r - l) / 2;
+            if(nums[mid] >= nums[0] && nums[mid] > nums[n - 1]){
+                //递增序列需要考虑nums[n-1]
+                l = mid + 1;
+            }//mid处必定不是最小值
+            else{
+                r = mid;//mid比0处值要小||mid处必n-1处要小 mid有可能是最小值 因此需要包含mid
+            }
+        }
+        //l==r退出循环 此时l指向最小值
+        return nums[l];
+    }
+};
+~~~
+
+### [寻找旋转排序数组中的最小值 II](https://leetcode-cn.com/problems/find-minimum-in-rotated-sorted-array-ii/)
+
+> 有重复数字
+
+#### 我的题解
+
+~~~cpp
+class Solution {
+public:
+    int findMin(vector<int>& nums) {
+        int n = nums.size();
+        int l = 0;
+        int r = n - 1;
+        int l0 = l;
+        
+        //其实l0可以替换为l
+        //n-1可以替换为r
+        while(l < r){
+            int mid = l + (r - l) / 2;
+            if(nums[l] != nums[r]){
+                //该情况是必定旋转的情况 最小值一定在nums[l0]之后 故中间值>等于左边值的时候向右收缩区间
+                if(nums[mid] >= nums[l0] && nums[mid] > nums[n - 1]){//中间值严格大于右边值才能保证旋转
+                    l = mid + 1;
+                }
+                else{//中间值小于右边值 或者中间值小于左边值 该中间值可能是最小值
+                    r = mid;
+                }
+            }
+            else{
+                l0 = ++l;
+            }
+        }
+        
+        return nums[l];
+    }
+};
+~~~
+
+### [ 在排序数组中查找元素的第一个和最后一个位置](https://leetcode-cn.com/problems/find-first-and-last-position-of-element-in-sorted-array/)
+
+#### 我的题解
+
+~~~cpp
+class Solution {
+public:
+    //在寻找左右边界的时候 需要注意 因为mid有可能成为target的左右边界
+    //所以在左右部分寻找时需要考虑左右边界处的值
+    //l + 1 < r 保证在每个步骤中有至少三个元素 l+1 == r 时还有2个元素  退出循环
+    int getLeftBound(vector<int>& nums, int l, int r, int target){
+        while(l + 1 < r){
+            int mid = l + (r - l) / 2;
+            if(target <= nums[mid])//找到左边界
+                r = mid;
+            else 
+                l = mid;
+        }
+        int left_bound = -1;
+        if(nums[r] == target) 
+            left_bound = r;
+        if(nums[l] == target) 
+            left_bound = l;
+        //这两个if不可以调换顺序 因为l r处都有可能是等于target 所以左边界最后的值肯定是l
+        //若l r处只有一个位target 那么这两个的顺序是无所谓的
+        
+        return left_bound;
+    }
+    
+    int getRightBound(vector<int>& nums, int l, int r, int target){
+         while(l + 1 < r){
+            int mid = l + (r - l) / 2;
+            if(target >= nums[mid])//找到you边界
+                l = mid;
+            else 
+                r = mid;
+        }
+        
+        int right_bound = -1;
+        if(nums[l] == target) 
+            right_bound = l;
+        if(nums[r] == target) 
+            right_bound = r;
+        //这两个if不可以调换顺序 因为l r处都有可能是等于target 所以右边界最后的值肯定是r
+        //若l r处只有一个位target 那么这两个的顺序是无所谓的
+        
+        return right_bound;
+    }
+    vector<int> searchRange(vector<int>& nums, int target) {
+        int n = nums.size();            
+        if(n == 0)
+            return {-1, -1};
+        int l = 0;
+        int r = n - 1;
+        
+        int lb = getLeftBound(nums, l, r, target);
+        int rb = getRightBound(nums, l, r, target);
+        
+        return {lb, rb};
+    }
+ 
+};
+~~~
+
+### [山脉数组的峰顶索引](https://leetcode-cn.com/problems/peak-index-in-a-mountain-array/)
+
+#### 我的题解
+
+~~~cpp
+class Solution {
+public:
+    //TC-O(n)
+    int findPeakElement(vector<int>& nums) {
+        int n = nums.size();
+        // for(int i = 0; i + 1 < n; i++){
+        //     if(nums[i] > nums[i + 1])
+        //         return i;//元素降序 或者 先升序后降序
+        // }
+        // return n - 1;//元素升序排列
+        
+        return search(0, n - 1, nums);
+    }
+    //TC-O(logn)
+    int search(int l, int r, vector<int>& nums){
+        if(l == r)
+            return l;
+        int mid = l + (r - l) / 2;
+        if(nums[mid] > nums[mid + 1])//处在下降序列中 峰值在mid及左边 所以在左半段中搜索
+            return search(l, mid, nums);
+        return search(mid + 1, r, nums);//处在上升序列中 峰值必定在mid右边 所以在右半段中搜索
+    }
+};
+~~~
+
+### [山脉数组中查找目标值](https://leetcode-cn.com/problems/find-in-mountain-array/)
+
+#### 我的题解
+
+> 结合峰值索引求解  还有匿名函数的使用
+
+~~~cpp
+/**
+ * // This is the MountainArray's API interface.
+ * // You should not implement it, or speculate about its implementation
+ * class MountainArray {
+ *   public:
+ *     int get(int index);
+ *     int length();
+ * };
+ */
+
+class Solution {
+public:
+    int bsearch(int l, int r,  MountainArray& nums, int target, int key(int)){
+        target = key(target);
+        while (l <= r) {
+            int mid = l + (r - l) / 2;
+            int mm = key(nums.get(mid));
+            if (mm == target) {
+                return mid;
+            }
+            else if (mm > target)
+                r = mid - 1;
+            else
+                l = mid + 1;
+        }
+        return -1;
+    }
+    //貌似只有一个峰就能得到正确答案 多个峰并不行
+    int findInMountainArray(int target, MountainArray& mountainArr) {
+        int n = mountainArr.length();
+        int l = 0;
+        int r = n - 1;
+
+        int peakIdx = binarySearch(l, r, mountainArr);//找到峰值索引
+        cout << peakIdx<<endl;
+        //在峰值左边找目标值 二分查找 升序序列
+        l = 0;
+        r = peakIdx;
+        //匿名函数  lambda表达式应用
+        int idx = bsearch(l, r, mountainArr, target, [](int x) -> int{return x;});
+        if(idx != -1)
+            return idx;
+        
+        //在峰值右边找目标值 降序序列 数组值取负数 然后target也取负数 这样就和升序序列二分查找一样了
+        l = peakIdx + 1;
+        r = n - 1;
+        return bsearch(l, r, mountainArr, target, [](int x) -> int{return -x;});
+    }
+
+    int binarySearch(int l, int r, MountainArray& nums) {
+        if (l == r)
+            return l;
+        int mid = l + (r - l) / 2;
+        int mm = nums.get(mid);
+        if (mm > nums.get(mid + 1))//处在下降序列中 峰值在mid及左边 所以在左半段中搜索
+            return binarySearch(l, mid, nums);
+        return binarySearch(mid + 1, r, nums);//处在上升序列中 峰值必定在mid右边 所以在右半段中搜索
+    }
+};
+~~~
+
+### [找到 K 个最接近的元素(困难)](https://leetcode-cn.com/problems/find-k-closest-elements/)
+
+#### 我的题解([refer](https://leetcode-cn.com/problems/find-k-closest-elements/solution/pai-chu-fa-shuang-zhi-zhen-er-fen-fa-python-dai-ma/))
+
+> $TC-O(\log n)$
+
+~~~cpp
+class Solution {
+public:
+    vector<int> findClosestElements(vector<int>& arr, int k, int x) {
+        int n = arr.size();
+        int l = 0;
+        int r = n - k;
+        
+        while(l < r){
+            //int mid = (l + r) / 2;
+            int mid = l + (r - l) / 2;
+            cout << mid << endl;
+            //[mid, mid+k]共k+1个数字
+            if(x - arr[mid] > arr[mid + k] - x)
+                l = mid + 1;
+            else//如果相等 删除右边界处数值
+                r = mid;
+        }
+        
+        return vector<int>(arr.begin() + l, arr.begin() + l + k);
+    }
+};
+~~~
+
+### [寻找两个正序数组的中位数(困难)](https://leetcode-cn.com/problems/median-of-two-sorted-arrays/)
+
+#### 我的题解([refer](https://leetcode-cn.com/problems/median-of-two-sorted-arrays/solution/xun-zhao-liang-ge-you-xu-shu-zu-de-zhong-wei-s-114/))
+
+> $TC-O(\log(m+n))$
+>
+
+~~~cpp
+class Solution {
+public:
+   /* 主要思路：要找到第 k (k>1) 小的元素，那么就取 pivot1 = nums1[k/2-1] 和 pivot2 = nums2[k/2-1] 进行比较
+    * 这里的 "/" 表示整除
+    * nums1 中小于等于 pivot1 的元素有 nums1[0 .. k/2-2] 共计 k/2-1 个
+    * nums2 中小于等于 pivot2 的元素有 nums2[0 .. k/2-2] 共计 k/2-1 个
+    * 取 pivot = min(pivot1, pivot2)，两个数组中小于等于 pivot 的元素共计不会超过 (k/2-1) + (k/2-1) <= k-2 个
+    * 这样 pivot 本身最大也只能是第 k-1 小的元素
+    * 如果 pivot = pivot1，那么 nums1[0 .. k/2-1] 都不可能是第 k 小的元素。把这些元素全部 "删除"，剩下的作为新的 nums1 数组
+    * 如果 pivot = pivot2，那么 nums2[0 .. k/2-1] 都不可能是第 k 小的元素。把这些元素全部 "删除"，剩下的作为新的 nums2 数组
+    * 由于我们 "删除" 了一些元素（这些元素都比第 k 小的元素要小），因此需要修改 k 的值，减去删除的数的个数
+    */
+    int getKthElement(vector<int>& nums1, vector<int> nums2, int k){
+        int m = nums1.size();
+        int n = nums2.size();
+        int idx1 = 0;
+        int idx2 = 0;
+        
+        while(true){
+            if(idx1 == m)
+                return nums2[idx2 + k - 1];
+            if(idx2 == n)
+                return nums1[idx1 + k - 1];
+            if(k == 1)
+                return min(nums1[idx1], nums2[idx2]);
+            
+            int idx11 = min(idx1 + k / 2 - 1, m - 1);
+            int idx22 = min(idx2 + k / 2 - 1, n - 1);
+            int pivot1 = nums1[idx11];
+            int pivot2 = nums2[idx22];
+            if(pivot1 <= pivot2){
+                k -= idx11 - idx1 + 1;
+                idx1 = idx11 + 1;
+            }
+            else{
+                k -= idx22 - idx2 + 1;
+                idx2 = idx22 + 1;
+            }
+        }
+    }
+    double findMedianSortedArrays(vector<int>& nums1, vector<int>& nums2) {
+        int m = nums1.size();
+        int n = nums2.size();
+        int len = m + n;
+        if(len & 1){//奇数
+            return getKthElement(nums1,nums2, (len + 1)/2);
+        }
+        else{
+            return (getKthElement(nums1,nums2, len/2) + getKthElement(nums1,nums2, len/2 + 1)) / 2.0;
+        }
+    }
+};
+~~~
